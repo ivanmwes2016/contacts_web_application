@@ -260,7 +260,6 @@
 
                 // Refresh the contact list or modal
                 $("#contact-list").empty(); // Clear contact list
-                loadContacts(); // Reload contacts
               },
               error: function (xhr, status, error) {
                 console.error("Error updating contact:", error);
@@ -294,9 +293,7 @@
             });
           }
         });
-    </script>
 
-    <script>
       document
         .getElementById("new_contact_btn")
         .addEventListener("click", () => {
@@ -326,6 +323,8 @@
             data: JSON.stringify(formData),
             success: function (response) {
               $("#contact-form")[0].reset(); // Reset the form
+              $("#new_contact_modal").modal("hide");
+              loadContacts();
             },
             error: function (xhr, status, error) {
               alert("Error: " + xhr.responseText);
