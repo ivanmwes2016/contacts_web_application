@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <title>Contact List</title>
+  </head>
+  <body>
+    <div class="container mt-5">
+      <div>
+        <h1>Contacts</h1>
+        <button
+          type="button"
+          id="new_contact_btn"
+          class="btn btn-outline-secondary"
+        >
+          New Contact
+        </button>
+      </div>
+      <hr style="border: 1px solid #000; margin: 20px 0" />
+      <ul id="contact-list" class="d-grid gap-2 col-3 list-group w-100"></ul>
+    </div>
+
+    <!-- Create new Contact Model -->
+    <div
+      class="modal fade"
+      id="new_contact_modal"
+      tabindex="-1"
+      aria-labelledby="newContactModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="newContactModalLabel">
+              Create New Contact
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+
+          <form class="p-5" id="contact_form">
+            <div class="mb-3">
+              <label for="first_name" class="form-label">First Name</label>
+              <input type="text" class="form-control" id="first_name" />
+
+              <label for="exampleInputEmail1" class="form-label"
+                >Last Name</label
+              >
+              <input type="text" class="form-control" id="second_name" />
+
+              <label for="exampleInputEmail1" class="form-label">Email</label>
+              <input type="email" class="form-control" id="email" />
+
+              <label for="exampleInputEmail1" class="form-label"
+                >First Line of Address</label
+              >
+              <input type="text" class="form-control" id="first_line_address" />
+
+              <label for="exampleInputEmail1" class="form-label"
+                >Post Code</label
+              >
+              <input type="text" class="form-control" id="post_code" />
+
+              <label for="exampleInputEmail1" class="form-label"
+                >Telephone / Mobile</label
+              >
+              <input type="text" class="form-control" id="contact_number" />
+            </div>
+
+            <button
+              type="submit"
+              class="btn btn-primary"
+              onclick="loadContacts()"
+            >
+              Submit
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contact Modal -->
+    <div
+      class="modal fade"
+      id="contactModal"
+      tabindex="-1"
+      aria-labelledby="contactModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="contactModalLabel">Contact Details</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <!-- Items -->
+          <div class="modal-body d-grid gap-3" id="modal-details"></div>
+
+          <div class="mx-3 mb-3">
+            <button type="button" id="btn-update" class="btn btn-success">
+              Update
+            </button>
+            <button type="button" id="btn-delete" class="btn btn-danger">
+              Delete Contact
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function loadContacts() {
+        $.ajax({
+          url: "{% url 'contact_list' %}", // URL to fetch the contacts in JSON format
+          method: "GET",
+          success: function (response) {
+            var contacts = response.contacts;
+            var contactList = $("#contact-list");
+            contactList.empty(); // Clear the list first
+            if (contacts.length > 0) {
+              // Loop through each contact and append it to the list
+              $.each(contacts, function (index, contact) {
+                contactList.append(
+                  `<li class="list-group-item">
+                    <button class="btn btn-light w-100" onClick="loadContactDetail(${contact.id})">
+                      <p class="fs-4 m-0">${contact.first_name} ${contact.second_name}</p>
+                      <p>${contact.contact_number}</p>
+                    </button>
+                  </li>`
+                );
+              });
+            } else {
+              contactList.append("<li>No contacts available.</li>");
+            }
+          },
+          error: function (xhr, status, error) {
+            console.error("Error fetching contacts:", error);
+          },
+        });
+      }
+
+      loadContacts();
+
+      let currentContactData = null;
+
+      function loadContactDetail(contactId) {
+        fetch(`contact/${contactId}`)
+          .then((res) => res.json())
+          .then((data) => {
+            let contentModal = document.getElementById("modal-details");
+            contentModal.innerHTML = "";
+
+            currentContactData = data;
+
+            for (let key in data) {
+              if (key == "id") continue;
+              let p = document.createElement("p");
+
+              //buttons
+              let button = document.createElement("button");
+
+              //wrappers
+              let wrapper = document.createElement("div");
+              let itemWrapper = document.createElement("div");
+              let inputWrapper = document.createElement("div");
+              inputWrapper.classList.add("mt-2");
+
+              //input
+              let input = document.createElement("input");
+              input.type = "text";
+              input.value = data[key]; // check this
+              input.classList.add("form-control", "d-none");
+
+              const title = key
+                .replace(/_/g, " ")
+                .replace(/\b\w/g, (char) => char.toUpperCase());
+
+              p.innerHTML = `<strong>${title}:</strong> ${data[key]}`;
+
+              //Button Styling
+              button.classList.add("btn", "btn-light", "btn-sm");
+              button.innerHTML = `<p class="mb-0"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+  <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+  <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/>
+</svg></p>`;
+
+              button.addEventListener("click", () => {
+                input.classList.toggle("d-none");
+
+                if (!input.classList.contains("d-done")) {
+                  input.focus();
+                }
+              });
+
+              // Event to update text when input loses focus
+              input.addEventListener("blur", () => {
+                data[key] = input.value; // Update the data object
+                p.innerHTML = `<strong>${title}:</strong> ${input.value}`;
+                p.classList.remove("d-none");
+                input.classList.add("d-none");
+              });
+
+              p.classList.add("mb-0");
+              wrapper.classList.add(
+                "d-flex",
+                "flex-row",
+                "justify-content-between",
+                "align-items-center",
+                "my-8"
+              );
+
+              wrapper.appendChild(p);
+              wrapper.appendChild(button);
+
+              inputWrapper.appendChild(input);
+
+              itemWrapper.appendChild(wrapper);
+              itemWrapper.appendChild(inputWrapper);
+              contentModal.appendChild(itemWrapper);
+            }
+
+            let contactModal = new bootstrap.Modal(
+              document.getElementById("contactModal")
+            );
+            contactModal.show();
+          })
+          .catch((err) => console.error("Error", err));
+      }
+
+      document
+        .getElementById("btn-update")
+        .addEventListener("click", function () {
+          console.log(currentContactData);
+          if (currentContactData) {
+            // Send the updated data to the Django backend
+            $.ajax({
+              url: `contact/${currentContactData.id}/update`, // Update URL
+              method: "PATCH",
+              data: JSON.stringify(currentContactData),
+              contentType: "application/json",
+              success: function (response) {
+                let contactModal = new bootstrap.Modal(
+                  document.getElementById("contactModal")
+                );
+
+                // Refresh the contact list or modal
+                $("#contact-list").empty(); // Clear contact list
+                loadContacts(); // Reload contacts
+              },
+              error: function (xhr, status, error) {
+                console.error("Error updating contact:", error);
+                alert("Failed to update. Please try again.");
+              },
+            });
+          }
+        });
+      document
+        .getElementById("btn-delete")
+        .addEventListener("click", function () {
+          if (currentContactData) {
+            $.ajax({
+              url: `contact/${currentContactData.id}/delete`,
+              method: "DELETE",
+              success: function (response) {
+                // Close the modal after successful deletion
+                let contactModal = new bootstrap.Modal(
+                  document.getElementById("contactModal")
+                );
+                contactModal.hide(); // Close the modal
+
+                // Optionally, refresh the contact list after deletion
+                $("#contact-list").empty(); // Clear contact list
+                loadContacts(); // Reload contacts
+              },
+              error: function (xhr, status, error) {
+                console.error("Error deleting contact:", error);
+                alert("Failed to delete. Please try again.");
+              },
+            });
+          }
+        });
+    </script>
+
+    <script>
+      document
+        .getElementById("new_contact_btn")
+        .addEventListener("click", () => {
+          let newContactModal = new bootstrap.Modal(
+            document.getElementById("new_contact_modal")
+          );
+          newContactModal.show();
+        });
+
+      $(document).ready(() => {
+        $("#contact_form").submit((e) => {
+          e.preventDefault();
+
+          let formData = {
+            first_name: $("#first_name").val(),
+            second_name: $("#second_name").val(),
+            email: $("#email").val(),
+            first_line_address: $("#first_line_address").val(),
+            post_code: $("#post_code").val(),
+            contact_number: $("#contact_number").val(),
+          };
+
+          $.ajax({
+            url: "contact/create", // Change this to your Django API URL
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(formData),
+            success: function (response) {
+              $("#contact-form")[0].reset(); // Reset the form
+            },
+            error: function (xhr, status, error) {
+              alert("Error: " + xhr.responseText);
+            },
+          });
+        });
+      });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
