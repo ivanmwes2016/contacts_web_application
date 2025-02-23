@@ -63,6 +63,16 @@ For this application we will use AWS-EC2 + gunicon + Nginx + Github actions for 
 3️⃣ Install Dependencies on EC2
 -`sudo apt install python3-pip python3-venv -y`
 - Install PostgresSQL: `sudo apt install postgresql postgresql-contrib libpq-dev -y`
+  
+  ```
+  Note: In our file we used, an onfile sqlite.db file for data persistence.
+  However:
+  Using an on-file SQLite database on AWS is not recommended for production, because:
+    - Data Loss Risk – If the EC2 instance restarts or gets replaced, the SQLite file can be lost.
+    - Concurrency Issues – SQLite does not handle multiple users well, which can cause database locks.
+    - Scaling Problems – If you add more EC2 instances later, they won’t share the same SQLite file.
+
+  ```
 
 4️⃣ Set Up the Django Project
 - clone the repo: ``git clone https://github.com/ivanmwes2016/contacts_web_application.git` and `cd /contacts`
@@ -93,7 +103,7 @@ server {
 }
 ```
 
-Enable the config.
+### Enable the config.
 `sudo ln -s /etc/nginx/sites-available/django /etc/nginx/sites-enabled
 sudo systemctl restart nginx`
 
@@ -145,7 +155,7 @@ jobs:
 
 `EC2_HOST` → Your EC2 public IP
 
-🚀 Done! It's advised to create branches from  the main branch. When you merge the changes to main an automatic depolyment will trigger.
+🚀  # Done! It's advised to create branches from  the main branch. When you merge the changes to main an automatic depolyment will trigger.
 
 
 
